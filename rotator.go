@@ -36,6 +36,9 @@ func checkAndArchive(filename string, currentSize int64, maxSize int64) bool {
      return false
   }
 
+
+
+
   //Step 4: Wrap archive in a gzip Writer
   gzWriter := gzip.NewWriter(archive)
 
@@ -49,7 +52,26 @@ func checkAndArchive(filename string, currentSize int64, maxSize int64) bool {
     return false
   }
 
-  //Step 6:
+  //Step 6: Close in strict order (gzWriter MUST close first and check for flush errors)
+  if err := gzWriter.Close(); err != nil {
+    fmt.Prinln("[ERROR] Could not finalize gzip:", err)
+    archive.Close()
+    original.Close()
+
+    fmt.Println("[ARCHIVE] Saved to:", archiveName)
+
+    //Step 7: Truncate original file to 0 bytes
+    err = os.Truncate(filename, 0)
+    if err != nil {
+        fmt.Println("[ERROR] Could not clear log file:", err)
+
+      //Returning false to maintain logic consistency
+      return false
+    }
+ 
+    return true
+}
+    
 
 
 
